@@ -190,9 +190,28 @@ All API responses follow this standard format:
 {
   "success": false,
   "error": "Error message",
-  "field": "Optional field name for validation errors"
+  "field": "Optional field name for validation errors",
+  "statusCode": 400  // HTTP status code
 }
 ```
+
+### Error Handling
+
+The API implements robust error handling through a middleware layer that:
+
+1. Catches and formats all errors consistently
+2. Provides appropriate HTTP status codes
+3. Includes detailed error messages for debugging
+4. Validates request bodies against required fields
+5. Logs errors for monitoring and troubleshooting
+6. Handles method-specific routing (GET, POST, PUT, DELETE)
+
+The middleware includes:
+
+- **ApiError class**: Custom error class with status code support
+- **validateRequest function**: Validates request bodies against required fields
+- **methodHandler function**: Routes requests to the appropriate handler based on HTTP method
+- **withErrorHandling wrapper**: Applies consistent error handling to all API endpoints
 
 ### Authentication
 
@@ -320,10 +339,22 @@ Authorization: Bearer your_jwt_token
 - **URL**: `/api/price-ticker`
 - **Method**: `GET`
 - **Query Parameters**:
-  - `ids` - Comma-separated list of cryptocurrency IDs (e.g., "bitcoin,ethereum")
-  - `vs_currency` - Currency to display prices in (default: "usd")
-  - `include_market_data` - Whether to include detailed market data (default: "true")
+  - `coins` - Comma-separated list of cryptocurrency IDs (e.g., "bitcoin,ethereum")
+  - `currency` - Currency to display prices in (default: "usd")
+  - `include_24h_change` - Whether to include 24h price change data (default: "true")
 - **Response**: Cryptocurrency price data
+
+**Get Historical Price Data**
+- **URL**: `/api/price-ticker`
+- **Method**: `POST`
+- **Body**:
+  ```json
+  {
+    "coin": "bitcoin",
+    "days": 7
+  }
+  ```
+- **Response**: Historical price data for the specified cryptocurrency
 
 ## Deployment
 

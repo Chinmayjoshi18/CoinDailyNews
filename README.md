@@ -19,7 +19,15 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
 │   ├── ArticleCard.js         # Card component for displaying article summaries
 │   ├── Footer.js              # Site-wide footer with navigation and newsletter signup
 │   ├── Header.js              # Site header with navigation and search
-│   └── PriceTicker.js         # Real-time cryptocurrency price ticker component
+│   ├── PriceTicker.js         # Real-time cryptocurrency price ticker component
+│   └── admin/                 # Admin panel components
+│       ├── AdminSidebar.js    # Sidebar navigation for admin panel
+│       ├── ArticleEditor.js   # Form for creating and editing articles
+│       ├── ArticleList.js     # Table display of all articles with management options
+│       ├── CategoryManagement.js # Interface for managing categories and subcategories
+│       ├── Dashboard.js       # Admin dashboard with statistics and recent activity
+│       ├── LoginForm.js       # Authentication form for admin access
+│       └── WebsiteSettings.js # Form for managing site-wide settings
 ├── pages/                     # Application pages and API routes
 │   ├── _app.js                # Custom App component for global layout
 │   ├── _document.js           # Custom Document component
@@ -80,6 +88,48 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Admin Panel Features
+
+The CoinDailyNews platform includes a comprehensive admin panel for content management and site administration. The admin panel features:
+
+### Authentication System
+- Secure login for administrators and editors
+- Role-based access control
+- Demo credentials for testing (admin@example.com/admin123)
+
+### Dashboard
+- Overview statistics for articles, users, engagement metrics
+- Recent activity log
+- Quick access to common administrative tasks
+
+### Article Management
+- List view of all articles with filtering and sorting options
+- Create, edit, and delete articles
+- Rich text editor for article content
+- Support for categories, tags, and featured images
+- Article status management (draft/published)
+- SEO metadata management
+
+### Category Management
+- Hierarchical category structure with subcategories
+- Create, edit, and delete categories
+- Assign colors and descriptions to categories
+- Manage relationships between categories
+
+### Website Settings
+- Site-wide configuration options
+- Customize site name, logo, and metadata
+- Social media integration
+- Footer customization
+- Analytics integration
+
+### Accessing the Admin Panel
+1. Navigate to /admin in your browser
+2. Log in with the provided credentials
+3. For demo purposes, use:
+   - Admin: admin@example.com / admin123
+   - Editor: editor@example.com / editor123
 
 ## Deployment
 

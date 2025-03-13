@@ -208,7 +208,6 @@ async function autoConvertTags() {
       if (newContent.includes('import ')) {
         // Add after the last import statement
         const lastImportIndex = newContent.lastIndexOf('import ');
-const Link = require('next/link');
         const endOfImport = newContent.indexOf('\n', lastImportIndex);
         if (endOfImport !== -1) {
           newContent = 

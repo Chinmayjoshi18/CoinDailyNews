@@ -81,6 +81,8 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
 
 ### Installation
 
+#### Option 1: Manual Installation
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/Chinmayjoshi18/CoinDailyNews.git
@@ -108,6 +110,49 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+#### Option 2: Automated Setup Script
+
+We provide a convenient setup script that automates the local environment setup process:
+
+1. Clone the repository (if you haven't already):
+   ```bash
+   git clone https://github.com/Chinmayjoshi18/CoinDailyNews.git
+   ```
+
+2. Run the setup script using one of these methods:
+
+   **Using npm:**
+   ```bash
+   cd CoinDailyNews
+   npm run setup:local
+   ```
+
+   **Or directly:**
+   ```bash
+   cd CoinDailyNews
+   chmod +x scripts/setup-local-env.sh
+   ./scripts/setup-local-env.sh
+   ```
+
+   **For a dry run (shows commands without executing them):**
+   ```bash
+   npm run setup:local:dry-run
+   ```
+
+The script will automatically:
+- Install all dependencies
+- Install missing modules like react-quill
+- Run ESLint auto-fix to resolve code issues
+- Validate the codebase with Vercel Validation System (VVS)
+- Build the project to verify everything works correctly
+
+3. After successful setup, start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
 ## Admin Panel Features
 

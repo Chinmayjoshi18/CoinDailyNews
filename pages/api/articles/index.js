@@ -8,6 +8,8 @@
  * - DELETE: Not implemented at the index level (use /api/articles/[id])
  */
 
+import withErrorHandling, { ApiError, methodHandler } from '../middleware/withErrorHandling';
+
 // Sample article data to simulate a database
 const articlesData = [
   {
@@ -39,39 +41,6 @@ const articlesData = [
     metaDescription: 'A comprehensive breakdown of Ethereum 2.0\'s upgrade timeline and what it means for developers and investors.'
   }
 ];
-
-/**
- * Handle HTTP requests for article management
- * 
- * @param {Object} req - Next.js request object
- * @param {Object} res - Next.js response object
- */
-export default function handler(req, res) {
-  // Extract query parameters for filtering
-  const { method } = req;
-  
-  try {
-    switch (method) {
-      case 'GET':
-        return handleGetArticles(req, res);
-      case 'POST':
-        return handleCreateArticle(req, res);
-      default:
-        res.setHeader('Allow', ['GET', 'POST']);
-        return res.status(405).json({ 
-          success: false, 
-          error: `Method ${method} Not Allowed` 
-        });
-    }
-  } catch (error) {
-    console.error('Articles API Error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Server error processing article request',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
-  }
-}
 
 /**
  * Handle GET requests to retrieve articles
@@ -153,11 +122,7 @@ function handleCreateArticle(req, res) {
   const missingFields = requiredFields.filter(field => !article[field]);
   
   if (missingFields.length > 0) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required fields',
-      missingFields
-    });
+    throw new ApiError(`Missing required fields: ${missingFields.join(', ')}`, 400);
   }
   
   // Create a new article with generated ID (in a real app, this would be handled by the database)
@@ -178,3 +143,11 @@ function handleCreateArticle(req, res) {
     data: newArticle
   });
 }
+
+// Export the handler with method routing and error handling middleware
+export default withErrorHandling(
+  methodHandler({
+    GET: handleGetArticles,
+    POST: handleCreateArticle
+  })
+);

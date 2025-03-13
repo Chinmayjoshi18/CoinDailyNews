@@ -8,6 +8,7 @@ import ArticleList from '../components/admin/ArticleList';
 import ArticleEditor from '../components/admin/ArticleEditor';
 import CategoryManagement from '../components/admin/CategoryManagement';
 import WebsiteSettings from '../components/admin/WebsiteSettings';
+import AIArticleWriter from '../components/admin/AIArticleWriter';
 import LoginForm from '../components/admin/LoginForm';
 
 /**
@@ -84,6 +85,8 @@ export default function AdminPanel() {
         return <ArticleEditor article={articleToEdit} onBack={handleBackToArticles} />;
       case 'categories':
         return <CategoryManagement />;
+      case 'ai-writer':
+        return <AIArticleWriter />;
       case 'settings':
         return <WebsiteSettings />;
       default:
@@ -199,6 +202,18 @@ export default function AdminPanel() {
                     onClick={() => setActiveTab('articles')}
                   >
                     Articles
+                  </button>
+                </li>
+                <li className="mr-2">
+                  <button
+                    className={`inline-block py-2 px-4 border-b-2 font-medium text-sm ${
+                      activeTab === 'ai-writer'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('ai-writer')}
+                  >
+                    AI Writer
                   </button>
                 </li>
                 <li className="mr-2">

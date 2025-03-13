@@ -27,7 +27,13 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
 │       ├── CategoryManagement.js # Interface for managing categories and subcategories
 │       ├── Dashboard.js       # Admin dashboard with statistics and recent activity
 │       ├── LoginForm.js       # Authentication form for admin access
-│       └── WebsiteSettings.js # Form for managing site-wide settings
+│       ├── WebsiteSettings.js # Form for managing site-wide settings
+│       ├── AIArticleWriter.js # Main component for AI article generation
+│       └── aiArticle/         # AI Article Writer subcomponents
+│           ├── UrlInput.js    # Form for generating content from a URL
+│           ├── RssInput.js    # Form for generating content from RSS feeds
+│           ├── WebsiteInput.js # Form for generating content from websites
+│           └── ContentReview.js # Review and edit AI-generated content
 ├── pages/                     # Application pages and API routes
 │   ├── _app.js                # Custom App component for global layout
 │   ├── _document.js           # Custom Document component
@@ -117,6 +123,23 @@ The CoinDailyNews platform includes a comprehensive admin panel for content mana
 - Assign colors and descriptions to categories
 - Manage relationships between categories
 
+### AI Article Writer
+- Generate cryptocurrency news articles using AI
+- Three different input methods:
+  - **URL Input**: Generate content based on a single news article URL
+  - **RSS Feeds**: Create content from multiple RSS feed sources
+  - **Website Crawler**: Analyze entire crypto news websites for content
+- Content customization options:
+  - Adjust article length and style
+  - Focus on specific cryptocurrency topics
+  - Custom titles and article types
+- Content review and editing:
+  - Rich text editor for refining AI-generated content
+  - Source attribution and fact-checking
+  - SEO metadata management
+  - Category and tag assignment
+  - One-click publishing or saving as draft
+
 ### Website Settings
 - Site-wide configuration options
 - Customize site name, logo, and metadata
@@ -161,6 +184,10 @@ Make sure to set the following environment variables in your production environm
 - **Featured Articles**: Highlight important news and analysis
 - **Admin Panel**: Manage content, users, and site settings
 - **AI Article Generator**: Create content with AI assistance
+  - URL-based content generation
+  - RSS feed aggregation and analysis
+  - Website crawling and content extraction
+  - Multiple content styles and formats
 - **Responsive Design**: Optimized for all device sizes
 - **Dark Mode Support**: Built-in light and dark theme
 - **SEO Optimized**: Proper metadata and structured data

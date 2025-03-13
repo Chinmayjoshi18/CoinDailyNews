@@ -7,168 +7,94 @@
  * - DELETE: Delete a specific category
  */
 
+import withErrorHandling, { ApiError, methodHandler } from '../middleware/withErrorHandling';
+
 // Sample category data to simulate a database (same as in index.js)
 const categoriesData = [
   {
     id: '1',
-    name: 'Cryptocurrency News',
-    slug: 'crypto-news',
-    description: 'Latest news and updates from the cryptocurrency world',
-    color: '#3498db',
-    parentId: null,
-    order: 1
+    name: 'Market Analysis',
+    slug: 'market-analysis',
+    description: 'Detailed analysis of cryptocurrency markets, trends, and price movements.',
+    color: '#4CAF50',
+    iconName: 'trending_up',
+    featuredImage: '/images/categories/market-analysis.jpg',
+    displayOrder: 1
   },
   {
     id: '2',
-    name: 'Blockchain Technology',
+    name: 'Blockchain',
     slug: 'blockchain',
-    description: 'In-depth articles about blockchain technology and its applications',
-    color: '#2ecc71',
-    parentId: null,
-    order: 2
+    description: 'News and information about blockchain technology, developments, and innovations.',
+    color: '#2196F3',
+    iconName: 'link',
+    featuredImage: '/images/categories/blockchain.jpg',
+    displayOrder: 2
   },
   {
     id: '3',
-    name: 'DeFi',
-    slug: 'defi',
-    description: 'Decentralized Finance protocols, news, and analysis',
-    color: '#9b59b6',
-    parentId: null,
-    order: 3
-  },
-  {
-    id: '4',
-    name: 'NFTs',
-    slug: 'nft',
-    description: 'Non-Fungible Tokens and the digital art revolution',
-    color: '#e74c3c',
-    parentId: null,
-    order: 4
-  },
-  {
-    id: '5',
-    name: 'Market Analysis',
-    slug: 'market-analysis',
-    description: 'Technical and fundamental analysis of cryptocurrency markets',
-    color: '#f39c12',
-    parentId: null,
-    order: 5
-  },
-  {
-    id: '6',
-    name: 'Bitcoin',
-    slug: 'bitcoin',
-    description: 'News and analysis focused on Bitcoin',
-    color: '#f1c40f',
-    parentId: '1',
-    order: 1
-  },
-  {
-    id: '7',
-    name: 'Ethereum',
-    slug: 'ethereum',
-    description: 'News and analysis focused on Ethereum',
-    color: '#1abc9c',
-    parentId: '1',
-    order: 2
+    name: 'Regulation',
+    slug: 'regulation',
+    description: 'Updates on cryptocurrency regulations, legal developments, and policy changes worldwide.',
+    color: '#FFC107',
+    iconName: 'gavel',
+    featuredImage: '/images/categories/regulation.jpg',
+    displayOrder: 3
   }
 ];
 
 /**
- * Handle HTTP requests for specific category by ID
+ * Find a category by ID, throw error if not found
  * 
- * @param {Object} req - Next.js request object
- * @param {Object} res - Next.js response object
+ * @param {string} id - Category ID to find
+ * @returns {Object} The found category
+ * @throws {ApiError} If category not found
  */
-export default function categoryHandler(req, res) {
-  const { 
-    query: { id },
-    method 
-  } = req;
-
-  try {
-    // Find the category by ID
-    const category = categoriesData.find(cat => cat.id === id);
-    
-    // If category doesn't exist, return 404
-    if (!category) {
-      return res.status(404).json({ 
-        success: false, 
-        error: `Category with ID ${id} not found` 
-      });
-    }
-    
-    // Process based on HTTP method
-    switch (method) {
-      case 'GET':
-        return handleGetCategory(category, req, res);
-      case 'PUT':
-        return handleUpdateCategory(category, req, res);
-      case 'DELETE':
-        return handleDeleteCategory(id, req, res);
-      default:
-        res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
-        return res.status(405).json({ 
-          success: false, 
-          error: `Method ${method} Not Allowed` 
-        });
-    }
-  } catch (error) {
-    console.error('Category API Error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Server error processing category request',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+function findCategoryById(id) {
+  const category = categoriesData.find(category => category.id === id);
+  
+  if (!category) {
+    throw new ApiError(`Category with ID ${id} not found`, 404);
   }
+  
+  return category;
 }
 
 /**
  * Handle GET request to retrieve a specific category
  * 
- * @param {Object} category - The category to return
  * @param {Object} req - Next.js request object
  * @param {Object} res - Next.js response object
  */
-function handleGetCategory(category, req, res) {
-  const { includeChildren = 'false' } = req.query;
-  
-  let result = { ...category };
-  
-  // If includeChildren is true, add children categories
-  if (includeChildren === 'true') {
-    const children = categoriesData.filter(cat => cat.parentId === category.id);
-    result.children = children.length > 0 ? children : [];
-  }
+function handleGetCategory(req, res) {
+  const { id } = req.query;
+  const category = findCategoryById(id);
   
   return res.status(200).json({
     success: true,
-    data: result
+    data: category
   });
 }
 
 /**
  * Handle PUT request to update a specific category
  * 
- * @param {Object} category - The original category to update
  * @param {Object} req - Next.js request object
  * @param {Object} res - Next.js response object
  */
-function handleUpdateCategory(category, req, res) {
+function handleUpdateCategory(req, res) {
+  const { id } = req.query;
+  const category = findCategoryById(id);
   const updatedData = req.body;
   
-  // Check if the updated slug already exists (and it's not the current category)
+  // Check if trying to update slug to one that already exists
   if (updatedData.slug && updatedData.slug !== category.slug) {
-    const slugExists = categoriesData.some(cat => 
-      cat.slug === updatedData.slug && cat.id !== category.id
+    const existingCategory = categoriesData.find(
+      c => c.slug === updatedData.slug && c.id !== id
     );
     
-    if (slugExists) {
-      return res.status(400).json({
-        success: false,
-        error: 'Category slug must be unique',
-        field: 'slug'
-      });
+    if (existingCategory) {
+      throw new ApiError(`Category with slug '${updatedData.slug}' already exists`, 409);
     }
   }
   
@@ -192,26 +118,35 @@ function handleUpdateCategory(category, req, res) {
 /**
  * Handle DELETE request to remove a specific category
  * 
- * @param {string} id - ID of the category to delete
  * @param {Object} req - Next.js request object
  * @param {Object} res - Next.js response object
  */
-function handleDeleteCategory(id, req, res) {
-  // Check if the category has child categories
-  const hasChildren = categoriesData.some(cat => cat.parentId === id);
+function handleDeleteCategory(req, res) {
+  const { id } = req.query;
+  // Verify category exists before attempting to delete
+  findCategoryById(id);
   
-  if (hasChildren) {
-    return res.status(400).json({
-      success: false,
-      error: 'Cannot delete a category that has child categories',
-      message: 'Please move or delete all child categories first'
-    });
-  }
-  
-  // In a real application, remove the category from the database
+  // In a real application:
+  // 1. Check if any articles are using this category
+  // 2. Either prevent deletion or update those articles
+  // 3. Remove the category from the database
   
   return res.status(200).json({
     success: true,
     message: `Category with ID ${id} deleted successfully`
   });
 }
+
+// Export the handler with route handlers for each HTTP method and error handling middleware
+export default withErrorHandling(
+  async function categoryHandler(req, res) {
+    const { id } = req.query;
+    
+    // Handle different HTTP methods
+    return methodHandler({
+      GET: handleGetCategory,
+      PUT: handleUpdateCategory,
+      DELETE: handleDeleteCategory
+    })(req, res);
+  }
+);

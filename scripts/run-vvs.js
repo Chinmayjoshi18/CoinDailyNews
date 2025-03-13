@@ -138,7 +138,7 @@ async function autoConvertTags() {
         
         return `<Image src="${src}" width={${width}} height={${height}} ${rest.trim()} />`;
       },
-      importStatement: "import Image from 'next/image';"
+      importStatement: "const Image = require('next/image');"
     },
     { 
       htmlTag: /<a\s+([^>]*)href=['"]([^'"]+)['"](.*?)>(.*?)<\/a>/g,
@@ -146,18 +146,18 @@ async function autoConvertTags() {
         // Determine if it's an external link
         const isExternal = href.startsWith('http') || href.startsWith('//');
         if (isExternal) {
-          return `<a href="${href}" ${rest.trim()}>${content}</a>`;
+          return `<Link href="${href}" ${rest.trim()}>${content}</Link>`;
         }
         return `<Link href="${href}" ${rest.trim()}>${content}</Link>`;
       },
-      importStatement: "import Link from 'next/link';"
+      importStatement: "const Link = require('next/link');"
     },
     {
       htmlTag: /<script\s+([^>]*)src=['"]([^'"]+)['"](.*?)><\/script>/g,
       nextComponent: (attrs, src, rest) => {
         return `<Script src="${src}" ${rest.trim()} />`;
       },
-      importStatement: "import Script from 'next/script';"
+      importStatement: "const Script = require('next/script');"
     }
   ];
   
@@ -208,6 +208,7 @@ async function autoConvertTags() {
       if (newContent.includes('import ')) {
         // Add after the last import statement
         const lastImportIndex = newContent.lastIndexOf('import ');
+const Link = require('next/link');
         const endOfImport = newContent.indexOf('\n', lastImportIndex);
         if (endOfImport !== -1) {
           newContent = 

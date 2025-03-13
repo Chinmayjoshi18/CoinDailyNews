@@ -7,6 +7,8 @@
  * - DELETE: Delete a specific article
  */
 
+import withErrorHandling, { ApiError, methodHandler } from '../middleware/withErrorHandling';
+
 // Sample article data to simulate a database (same as in index.js)
 const articlesData = [
   {
@@ -40,61 +42,32 @@ const articlesData = [
 ];
 
 /**
- * Handle HTTP requests for specific article by ID
+ * Find an article by ID, throw error if not found
  * 
- * @param {Object} req - Next.js request object
- * @param {Object} res - Next.js response object
+ * @param {string} id - Article ID to find
+ * @returns {Object} The found article
+ * @throws {ApiError} If article not found
  */
-export default function articleHandler(req, res) {
-  const { 
-    query: { id },
-    method 
-  } = req;
-
-  try {
-    // Find the article by ID
-    const article = articlesData.find(article => article.id === id);
-    
-    // If article doesn't exist, return 404
-    if (!article) {
-      return res.status(404).json({ 
-        success: false, 
-        error: `Article with ID ${id} not found` 
-      });
-    }
-    
-    // Process based on HTTP method
-    switch (method) {
-      case 'GET':
-        return handleGetArticle(article, res);
-      case 'PUT':
-        return handleUpdateArticle(article, req, res);
-      case 'DELETE':
-        return handleDeleteArticle(id, res);
-      default:
-        res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
-        return res.status(405).json({ 
-          success: false, 
-          error: `Method ${method} Not Allowed` 
-        });
-    }
-  } catch (error) {
-    console.error('Article API Error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Server error processing article request',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-    });
+function findArticleById(id) {
+  const article = articlesData.find(article => article.id === id);
+  
+  if (!article) {
+    throw new ApiError(`Article with ID ${id} not found`, 404);
   }
+  
+  return article;
 }
 
 /**
  * Handle GET request to retrieve a specific article
  * 
- * @param {Object} article - The article to return
+ * @param {Object} req - Next.js request object
  * @param {Object} res - Next.js response object
  */
-function handleGetArticle(article, res) {
+function handleGetArticle(req, res) {
+  const { id } = req.query;
+  const article = findArticleById(id);
+  
   return res.status(200).json({
     success: true,
     data: article
@@ -104,11 +77,12 @@ function handleGetArticle(article, res) {
 /**
  * Handle PUT request to update a specific article
  * 
- * @param {Object} article - The original article to update
  * @param {Object} req - Next.js request object
  * @param {Object} res - Next.js response object
  */
-function handleUpdateArticle(article, req, res) {
+function handleUpdateArticle(req, res) {
+  const { id } = req.query;
+  const article = findArticleById(id);
   const updatedData = req.body;
   
   // In a real application, validate the update data here
@@ -138,10 +112,14 @@ function handleUpdateArticle(article, req, res) {
 /**
  * Handle DELETE request to remove a specific article
  * 
- * @param {string} id - ID of the article to delete
+ * @param {Object} req - Next.js request object
  * @param {Object} res - Next.js response object
  */
-function handleDeleteArticle(id, res) {
+function handleDeleteArticle(req, res) {
+  const { id } = req.query;
+  // Verify article exists before attempting to delete
+  findArticleById(id);
+  
   // In a real application, remove the article from the database
   
   return res.status(200).json({
@@ -149,3 +127,17 @@ function handleDeleteArticle(id, res) {
     message: `Article with ID ${id} deleted successfully`
   });
 }
+
+// Export the handler with route handlers for each HTTP method and error handling middleware
+export default withErrorHandling(
+  async function articleHandler(req, res) {
+    const { id } = req.query;
+    
+    // Handle different HTTP methods
+    return methodHandler({
+      GET: handleGetArticle,
+      PUT: handleUpdateArticle,
+      DELETE: handleDeleteArticle
+    })(req, res);
+  }
+);

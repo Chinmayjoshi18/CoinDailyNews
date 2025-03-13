@@ -11,6 +11,7 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
 - Admin panel for content management
 - AI-assisted article generation
 - Responsive design with dark mode support
+- RESTful API for content and data integration
 
 ## Project Structure
 
@@ -39,7 +40,20 @@ CoinDailyNews is built with modern web technologies, focusing on performance, sc
 │   ├── _document.js           # Custom Document component
 │   ├── admin.js               # Admin panel for site management
 │   ├── ai-article.js          # AI-assisted article generation tool
-│   └── index.js               # Homepage with featured articles and latest news
+│   ├── index.js               # Homepage with featured articles and latest news
+│   └── api/                   # API endpoints
+│       ├── articles/          # Article management endpoints
+│       │   ├── index.js       # List and create articles
+│       │   └── [id].js        # Get, update, delete specific article
+│       ├── categories/        # Category management endpoints
+│       │   ├── index.js       # List and create categories
+│       │   └── [id].js        # Get, update, delete specific category
+│       ├── settings/          # Website settings endpoints
+│       │   └── index.js       # Get and update site settings
+│       ├── price-ticker/      # Cryptocurrency price data
+│       │   └── index.js       # Get price data for specified coins
+│       └── middleware/        # API middleware components
+│           └── withErrorHandling.js # Error handling middleware
 ├── public/                    # Static assets like images and icons
 ├── styles/                    # Global stylesheets and CSS modules
 │   └── globals.css            # Global CSS styles with Tailwind integration
@@ -154,6 +168,163 @@ The CoinDailyNews platform includes a comprehensive admin panel for content mana
    - Admin: admin@example.com / admin123
    - Editor: editor@example.com / editor123
 
+## API Documentation
+
+CoinDailyNews provides a comprehensive REST API that can be used to integrate with other applications or build custom frontends. All API endpoints return JSON responses with consistent formatting.
+
+### Response Format
+
+All API responses follow this standard format:
+
+#### Successful Response
+```json
+{
+  "success": true,
+  "data": { ... },  // Response data
+  "message": "Optional success message"
+}
+```
+
+#### Error Response
+```json
+{
+  "success": false,
+  "error": "Error message",
+  "field": "Optional field name for validation errors"
+}
+```
+
+### Authentication
+
+API authentication is handled via JWT tokens. Obtain a token by logging in through the `/api/auth/login` endpoint, then include it in subsequent requests:
+
+```
+Authorization: Bearer your_jwt_token
+```
+
+### API Endpoints
+
+#### Articles API
+
+**Get Articles**
+- **URL**: `/api/articles`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `category` - Filter by category slug
+  - `tag` - Filter by tag
+  - `status` - Filter by status (`published` (default) or `draft`)
+  - `author` - Filter by author
+  - `limit` - Number of articles to return (default: 10)
+  - `offset` - Pagination offset (default: 0)
+  - `sort` - Field to sort by (default: `publishedAt`)
+  - `order` - Sort order (`asc` or `desc`)
+- **Response**: Array of article objects with pagination metadata
+
+**Get Article by ID**
+- **URL**: `/api/articles/[id]`
+- **Method**: `GET`
+- **Response**: Single article object
+
+**Create Article**
+- **URL**: `/api/articles`
+- **Method**: `POST`
+- **Body**:
+  ```json
+  {
+    "title": "Article Title",
+    "content": "Article content...",
+    "excerpt": "Brief excerpt...",
+    "category": "category-slug",
+    "author": "Author Name",
+    "tags": ["tag1", "tag2"],
+    "status": "draft",
+    "featuredImage": "/path/to/image.jpg",
+    "metaDescription": "SEO description"
+  }
+  ```
+- **Response**: Created article object
+
+**Update Article**
+- **URL**: `/api/articles/[id]`
+- **Method**: `PUT`
+- **Body**: Article fields to update
+- **Response**: Updated article object
+
+**Delete Article**
+- **URL**: `/api/articles/[id]`
+- **Method**: `DELETE`
+- **Response**: Success message
+
+#### Categories API
+
+**Get Categories**
+- **URL**: `/api/categories`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `parentId` - Filter by parent category ID (use "null" for top-level categories)
+  - `includeChildren` - Boolean to include child categories (default: "false")
+- **Response**: Array of category objects
+
+**Get Category by ID**
+- **URL**: `/api/categories/[id]`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `includeChildren` - Boolean to include child categories (default: "false")
+- **Response**: Single category object
+
+**Create Category**
+- **URL**: `/api/categories`
+- **Method**: `POST`
+- **Body**:
+  ```json
+  {
+    "name": "Category Name",
+    "slug": "category-slug",
+    "description": "Category description",
+    "color": "#hexcolor",
+    "parentId": "parent-id-or-null",
+    "order": 1
+  }
+  ```
+- **Response**: Created category object
+
+**Update Category**
+- **URL**: `/api/categories/[id]`
+- **Method**: `PUT`
+- **Body**: Category fields to update
+- **Response**: Updated category object
+
+**Delete Category**
+- **URL**: `/api/categories/[id]`
+- **Method**: `DELETE`
+- **Response**: Success message
+
+#### Settings API
+
+**Get Website Settings**
+- **URL**: `/api/settings`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `section` - Optional section to retrieve (e.g., "site", "meta", "social")
+- **Response**: Website settings object or specific section
+
+**Update Website Settings**
+- **URL**: `/api/settings`
+- **Method**: `PUT`
+- **Body**: Settings fields to update
+- **Response**: Updated settings object
+
+#### Price Ticker API
+
+**Get Cryptocurrency Prices**
+- **URL**: `/api/price-ticker`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `ids` - Comma-separated list of cryptocurrency IDs (e.g., "bitcoin,ethereum")
+  - `vs_currency` - Currency to display prices in (default: "usd")
+  - `include_market_data` - Whether to include detailed market data (default: "true")
+- **Response**: Cryptocurrency price data
+
 ## Deployment
 
 ### Vercel Deployment
@@ -188,6 +359,7 @@ Make sure to set the following environment variables in your production environm
   - RSS feed aggregation and analysis
   - Website crawling and content extraction
   - Multiple content styles and formats
+- **RESTful API**: Comprehensive API for integrating with other systems
 - **Responsive Design**: Optimized for all device sizes
 - **Dark Mode Support**: Built-in light and dark theme
 - **SEO Optimized**: Proper metadata and structured data

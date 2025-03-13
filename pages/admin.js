@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import AdminSidebar from '../components/admin/AdminSidebar';
+import Dashboard from '../components/admin/Dashboard';
+import ArticleList from '../components/admin/ArticleList';
+import ArticleEditor from '../components/admin/ArticleEditor';
+import CategoryManagement from '../components/admin/CategoryManagement';
+import WebsiteSettings from '../components/admin/WebsiteSettings';
+import LoginForm from '../components/admin/LoginForm';
 
 /**
  * Admin panel page - provides access to site administration features
@@ -12,49 +17,117 @@ import Footer from '../components/Footer';
  * @returns {JSX.Element} The admin panel component
  */
 export default function AdminPanel() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [articleToEdit, setArticleToEdit] = useState(null);
 
-  // Check authentication and authorization
+  // Check if the user is authenticated via localStorage
+  // In a real app, this would be done via a session or JWT token
   useEffect(() => {
-    if (status !== 'loading') {
-      setIsLoading(false);
-      
-      // If user is not logged in, redirect to login
-      if (!session) {
-        // Keep track of where the user was trying to go for after login
-        router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
-      }
-      // Check if user has admin role
-      else if (session && session.user?.role !== 'admin') {
-        router.push('/unauthorized');
+    setIsLoading(true);
+    const storedUser = localStorage.getItem('adminUser');
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('adminUser');
       }
     }
-  }, [session, status, router]);
+    
+    setIsLoading(false);
+  }, []);
 
-  // If loading or not authenticated, show loading state
-  if (isLoading || !session) {
+  // Handle successful login
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    // Store user data in localStorage
+    localStorage.setItem('adminUser', JSON.stringify(userData));
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('adminUser');
+  };
+
+  // Handle edit article
+  const handleEditArticle = (article) => {
+    setArticleToEdit(article);
+    setActiveTab('edit-article');
+  };
+
+  // Handle back to article list
+  const handleBackToArticles = () => {
+    setArticleToEdit(null);
+    setActiveTab('articles');
+  };
+
+  // Render the appropriate component based on the active tab
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'articles':
+        return <ArticleList onEditArticle={handleEditArticle} />;
+      case 'new-article':
+        return <ArticleEditor onBack={handleBackToArticles} />;
+      case 'edit-article':
+        return <ArticleEditor article={articleToEdit} onBack={handleBackToArticles} />;
+      case 'categories':
+        return <CategoryManagement />;
+      case 'settings':
+        return <WebsiteSettings />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
+  // If loading, show loading state
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-slate-900">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            {isLoading ? 'Loading...' : 'Please sign in to access the admin panel'}
+            Loading...
           </h2>
-          {!isLoading && !session && (
-            <button
-              onClick={() => signIn()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
-            >
-              Sign In
-            </button>
-          )}
         </div>
       </div>
     );
   }
 
-  // If user doesn't have admin role, this would already be redirected by the useEffect
+  // If not authenticated, show login form
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <Head>
+          <title>Admin Login | CoinDailyNews</title>
+          <meta name="description" content="Admin panel login for CoinDailyNews" />
+        </Head>
+
+        <Header />
+
+        <main className="min-h-screen bg-gray-50 dark:bg-slate-900 py-12">
+          <div className="container max-w-screen-xl mx-auto px-4">
+            <div className="flex flex-col items-center justify-center py-12">
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">Admin Panel</h1>
+              <LoginForm onLogin={handleLogin} />
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -65,176 +138,103 @@ export default function AdminPanel() {
 
       <Header />
 
-      <main className="min-h-screen bg-gray-50 dark:bg-slate-900 py-12">
-        <div className="container">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">Admin Panel</h1>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {/* Content Management Card */}
-            <div className="card p-6">
-              <h2 className="text-xl font-semibold mb-4 dark:text-white">Content Management</h2>
-              <ul className="space-y-2">
-                <li>
-                  <a href="/admin/articles" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Manage Articles
-                  </a>
-                </li>
-                <li>
-                  <a href="/admin/categories" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Manage Categories
-                  </a>
-                </li>
-                <li>
-                  <a href="/admin/media" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Media Library
-                  </a>
-                </li>
-                <li>
-                  <a href="/ai-article" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    AI Article Writer
-                  </a>
-                </li>
-              </ul>
+      <div className="flex bg-gray-50 dark:bg-slate-900 min-h-screen">
+        <AdminSidebar onLogout={handleLogout} />
+        
+        <div className="flex-1 p-6 lg:p-8">
+          <div className="mb-6 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">Admin Panel</h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Welcome back, {user?.name || 'Admin'}
+              </p>
             </div>
-
-            {/* User Management Card */}
-            <div className="card p-6">
-              <h2 className="text-xl font-semibold mb-4 dark:text-white">User Management</h2>
-              <ul className="space-y-2">
-                <li>
-                  <a href="/admin/users" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Manage Users
-                  </a>
-                </li>
-                <li>
-                  <a href="/admin/roles" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Manage Roles
-                  </a>
-                </li>
-                <li>
-                  <a href="/admin/permissions" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Permissions
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Site Settings Card */}
-            <div className="card p-6">
-              <h2 className="text-xl font-semibold mb-4 dark:text-white">Site Settings</h2>
-              <ul className="space-y-2">
-                <li>
-                  <a href="/admin/settings/general" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    General Settings
-                  </a>
-                </li>
-                <li>
-                  <a href="/admin/settings/appearance" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    Appearance
-                  </a>
-                </li>
-                <li>
-                  <a href="/admin/settings/api-keys" className="text-blue-600 dark:text-blue-400 hover:underline">
-                    API Keys
-                  </a>
-                </li>
-              </ul>
+            
+            {/* Action buttons based on active tab */}
+            <div className="flex space-x-2">
+              {activeTab === 'articles' && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setActiveTab('new-article')}
+                >
+                  New Article
+                </button>
+              )}
+              {(activeTab === 'new-article' || activeTab === 'edit-article') && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleBackToArticles}
+                >
+                  Back to Articles
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Quick Stats Section */}
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Quick Stats</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-            <div className="card p-6">
-              <h3 className="text-gray-500 dark:text-gray-400 font-medium">Total Articles</h3>
-              <p className="text-3xl font-bold mt-2 dark:text-white">142</p>
-              <p className="text-sm text-green-600 mt-2">↑ 12% from last month</p>
+          {/* Tab navigation */}
+          {!(activeTab === 'new-article' || activeTab === 'edit-article') && (
+            <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+              <ul className="flex flex-wrap -mb-px">
+                <li className="mr-2">
+                  <button
+                    className={`inline-block py-2 px-4 border-b-2 font-medium text-sm ${
+                      activeTab === 'dashboard'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('dashboard')}
+                  >
+                    Dashboard
+                  </button>
+                </li>
+                <li className="mr-2">
+                  <button
+                    className={`inline-block py-2 px-4 border-b-2 font-medium text-sm ${
+                      activeTab === 'articles'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('articles')}
+                  >
+                    Articles
+                  </button>
+                </li>
+                <li className="mr-2">
+                  <button
+                    className={`inline-block py-2 px-4 border-b-2 font-medium text-sm ${
+                      activeTab === 'categories'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('categories')}
+                  >
+                    Categories
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`inline-block py-2 px-4 border-b-2 font-medium text-sm ${
+                      activeTab === 'settings'
+                        ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('settings')}
+                  >
+                    Settings
+                  </button>
+                </li>
+              </ul>
             </div>
-            <div className="card p-6">
-              <h3 className="text-gray-500 dark:text-gray-400 font-medium">Active Users</h3>
-              <p className="text-3xl font-bold mt-2 dark:text-white">2,847</p>
-              <p className="text-sm text-green-600 mt-2">↑ 8% from last month</p>
-            </div>
-            <div className="card p-6">
-              <h3 className="text-gray-500 dark:text-gray-400 font-medium">Comments</h3>
-              <p className="text-3xl font-bold mt-2 dark:text-white">854</p>
-              <p className="text-sm text-green-600 mt-2">↑ 24% from last month</p>
-            </div>
-            <div className="card p-6">
-              <h3 className="text-gray-500 dark:text-gray-400 font-medium">Newsletter Subscribers</h3>
-              <p className="text-3xl font-bold mt-2 dark:text-white">5,247</p>
-              <p className="text-sm text-green-600 mt-2">↑ 18% from last month</p>
-            </div>
-          </div>
+          )}
 
-          {/* Recent Activity Section */}
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Recent Activity</h2>
-          <div className="card overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-slate-800">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Action
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Details
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    Article Published
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    admin@example.com
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    Mar 16, 2023
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    "SEC Announces New Regulatory Framework..."
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    User Registration
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    newuser@example.com
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    Mar 15, 2023
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    New user registered
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    Comment Approved
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    moderator@example.com
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    Mar 15, 2023
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    Comment approved on "Bitcoin Adoption Reaches All-Time High..."
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          {/* Tab content */}
+          <div className="pb-8">
+            {renderTabContent()}
           </div>
         </div>
-      </main>
+      </div>
 
       <Footer />
     </div>
